@@ -1,0 +1,112 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[english,persian]{babel}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+% Adding packages for formatting and tables
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{graphicx}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{setspace}
+\onehalfspacing
+
+% Header and footer setup
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{گزارش توسعه افزونه Azure DevOps}
+\fancyhead[R]{تاریخ: 10 مه 2025}
+\fancyfoot[C]{\thepage\ از \pageref{LastPage}}
+
+% Document begins
+\begin{document}
+
+\begin{titlepage}
+    \centering
+    \vspace*{2cm}
+    {\Huge\textbf{گزارش رسمی توسعه افزونه جدید Azure DevOps برای نصب سرویس‌های ویندوزی سازگار با NServiceBus}}
+    \vspace{1cm}
+    {\Large تهیه‌شده توسط: سجاد صبری}
+    \vspace{1cm}
+    {\large تاریخ ارائه: 10 مه 2025}
+    \vfill
+\end{titlepage}
+
+\section*{مقدمه}
+تاکنون، تیم ما از افزونه‌ای در پلتفرم Azure DevOps برای نصب سرویس‌های ویندوزی بهره می‌برد که بر پایه دستورالعمل‌های \texttt{sc} (Service Control) عمل می‌کرد. با این حال، این روش به دلیل عدم پشتیبانی از نیازهای خاص سرویس‌های مبتنی بر NServiceBus، از جمله پیکربندی‌های پیشرفته و مدیریت فایل‌های وابسته، کارایی لازم را نداشت. به منظور رفع این محدودیت‌ها و ارتقاء فرآیندهای استقرار، پروژه توسعه یک افزونه جدید آغاز شد که با در نظر گرفتن الزامات NServiceBus طراحی و اجرا گردید.
+
+\section*{اهداف پروژه}
+\begin{itemize}
+    \item جایگزینی افزونه پیشین مبتنی بر \texttt{sc} با راهکاری مدرن و سازگار با معماری NServiceBus.
+    \item خودکارسازی کامل فرآیند نصب و راه‌اندازی سرویس‌های ویندوزی در چارچوب پایپلاین‌های Azure DevOps.
+    \item ارائه قابلیت پشتیبانی از پیکربندی‌های اختصاصی NServiceBus، نظیر نوع پیکربندی نقطه پایانی.
+    \item مدیریت بهینه فایل‌ها از آرتیفکت‌های پابلیش‌شده تا مقصد نصب.
+    \item پیاده‌سازی سیستم لاگ‌گیری دقیق برای تسهیل عیب‌یابی و پایش.
+\end{itemize}
+
+\section*{اقدامات انجام‌شده}
+
+\subsection*{تحلیل نیازها و محدودیت‌های افزونه پیشین}
+افزونه قبلی با بهره‌گیری از دستورات \texttt{sc create} و \texttt{sc start}، صرفاً امکان ایجاد و راه‌اندازی سرویس‌های ساده ویندوزی را فراهم می‌ساخت. این رویکرد برای سرویس‌های NServiceBus که نیازمند اجرای فایل اجرایی با آرگومان‌های خاص (مانند \texttt{/install}) هستند، ناکافی بود. عدم توانایی مدیریت خودکار فایل‌های وابسته و کپی آن‌ها از آرتیفکت‌های بیلد به مقصد نصب، به‌عنوان یک ضعف اساسی شناسایی شد. همچنین، فقدان مکانیزم لاگ‌گیری جامع، فرآیند عیب‌یابی را با چالش مواجه می‌کرد.
+
+\subsection*{طراحی ساختار جدید}
+طراحی یک تسک جدید مبتنی بر اسکریپت PowerShell در دستور کار قرار گرفت که شامل موارد زیر بود:
+\begin{itemize}
+    \item کپی‌سازی تمامی فایل‌ها از مسیر پابلیش‌شده (مانند آرتیفکت‌های بیلد) به دایرکتوری نصب.
+    \item شناسایی و استفاده از اولین فایل \texttt{.exe} موجود برای نصب سرویس.
+    \item پشتیبانی از آرگومان‌های اختصاصی NServiceBus (مانند \texttt{/servicename} و \texttt{/endpointConfigurationType}).
+\end{itemize}
+فایل‌های مانیفست (\texttt{vss-extension.json} و \texttt{task.json}) برای یکپارچگی با پلتفرم Azure DevOps تدوین شدند.
+
+\subsection*{توسعه و پیاده‌سازی فایل‌ها}
+\begin{itemize}
+    \item \textbf{فایل \texttt{vss-extension.json}:}
+    این فایل به‌عنوان مانیفست اصلی اکستنشن عمل می‌کند و شامل شناسه (\texttt{install-windows-service-task})، نام (\texttt{Install Windows Service})، نسخه (1.1.0)، و ناشر (\texttt{SajjadSaberi}) است. تسک به‌عنوان یک مشارکت از نوع \texttt{ms.vss-distributed-task.task} ثبت شده و دایرکتوری \texttt{task} را شامل می‌شود. آیکون (\texttt{icon.png}) برای نمایش در Azure DevOps Marketplace تعریف گردید.
+
+    \item \textbf{فایل \texttt{task.json}:}
+    تسک با شناسه منحصربه‌فرد \texttt{ecb2893f-6b57-48c9-9a9e-f2b8b65d601a} و نام \texttt{InstallNServiceBusService} معرفی شده است. ورودی‌هایی نظیر \texttt{serviceName}، \texttt{displayName}، \texttt{sourcePublishedPath}، \texttt{installPath}، \texttt{serviceAccountType}، \texttt{startType}، و \texttt{endpointConfigurationType} (اختیاری) طراحی شده‌اند. اجرای تسک با استفاده از PowerShell 3 و اسکریپت \texttt{install-service.ps1} پیکربندی شده است.
+
+    \item \textbf{فایل \texttt{install-service.ps1}:}
+    این اسکریپت فرآیند نصب را به‌صورت زیر مدیریت می‌کند:
+    \begin{itemize}
+        \item توقف و حذف سرویس موجود (در صورت وجود) با استفاده از \texttt{Stop-Service} و \texttt{sc delete}.
+        \item پاک‌سازی مسیر نصب قبلی و ایجاد دایرکتوری جدید.
+        \item کپی‌سازی تمامی فایل‌ها از \texttt{sourcePublishedPath} به \texttt{installPath}.
+        \item شناسایی اولین فایل \texttt{.exe} و اجرای آن با آرگومان‌های NServiceBus (مانند \texttt{/servicename} و \texttt{/displayname}).
+        \item راه‌اندازی سرویس با دستور \texttt{start}.
+    \end{itemize}
+    لاگ‌ها در مسیر \texttt{\$env:Temp\<serviceName>-install-log.txt} ثبت می‌شوند.
+\end{itemize}
+
+\subsection*{بهینه‌سازی و اعتبارسنجی}
+پارامتر \texttt{sourcePublishedPath} جایگزین \texttt{exeSourcePath} شد تا از آرتیفکت‌های پابلیش‌شده پشتیبانی کند. ترتیب ورودی‌ها در \texttt{task.json} تنظیم شد تا \texttt{sourcePublishedPath} پیش از \texttt{installPath} قرار گیرد (به‌منظور بهبود تجربه کاربری). نسخه از \texttt{1.0.0} به \texttt{1.1.0} ارتقا یافت تا بهبودهای اعمال‌شده (مانند کپی همه فایل‌ها) منعکس شود. اسکریپت با افزودن بررسی وجود مسیر و فایل \texttt{.exe} بهینه شد تا از وقوع خطاها جلوگیری به عمل آید.
+
+\subsection*{تهیه مستندات}
+فایل \texttt{README.md} به دو زبان فارسی و انگلیسی تدوین شد:
+\begin{itemize}
+    \item شامل بخش‌هایی نظیر مرور کلی، پیش‌نیازها (مانند دسترسی به آرتیفکت‌ها و محیط ویندوزی)، نحوه استفاده، و نکات کلیدی (مانند ضرورت وجود فایل \texttt{.exe} و محل لاگ‌ها).
+    \item این مستندات به‌عنوان راهنمایی جامع برای کاربران طراحی شده‌اند.
+\end{itemize}
+
+\section*{مقایسه با افزونه پیشین}
+\begin{itemize}
+    \item \textbf{افزونه پیشین (بر پایه \texttt{sc}):}
+    صرفاً از دستورات \texttt{sc} برای ایجاد و راه‌اندازی سرویس استفاده می‌کرد. فاقد قابلیت مدیریت خودکار فایل‌ها و نیازمند کپی دستی بود. پشتیبانی از آرگومان‌های NServiceBus را ارائه نمی‌داد. فاقد سیستم لاگ‌گیری بود.
+
+    \item \textbf{افزونه جدید:}
+    از اسکریپت PowerShell برای مدیریت جامع فایل‌ها و نصب سرویس بهره می‌برد. تمامی فایل‌ها از آرتیفکت‌های پابلیش‌شده کپی می‌شوند. از آرگومان‌های اختصاصی NServiceBus پشتیبانی می‌کند. سیستم لاگ‌گیری دقیق برای پایش و عیب‌یابی ارائه می‌دهد.
+\end{itemize}
+
+\section*{نتیجه‌گیری}
+افزونه جدید با رفع کاستی‌های نسخه پیشین، راهکاری جامع و انعطاف‌پذیر برای نصب سرویس‌های NServiceBus در محیط Azure DevOps فراهم آورده است. ارتقا به نسخه 1.1.0، بهبودهایی نظیر کپی‌سازی خودکار فایل‌ها و مستندات دو زبانه را نشان می‌دهد. این پروژه با موفقیت الزامات تیم را برآورده کرده و برای انتشار یا استفاده در محیط‌های عملیاتی آماده است.
+
+\section*{پیشنهادات برای توسعه آتی}
+\begin{itemize}
+    \item افزودن امکان انتخاب فایل \texttt{.exe} خاص به‌جای استفاده از اولین فایل.
+    \item پشتیبانی از نصب چندین سرویس در یک تسک واحد.
+    \item به‌کارگیری متغیرهای مخفی (Secrets) برای افزایش امنیت مدیریت رمزهای عبور.
+\end{itemize}
+
+\end{document}

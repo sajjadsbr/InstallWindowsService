@@ -1,16 +1,16 @@
 param (
-    [string]$ExeSourcePath,
-    [string]$InstallPath,
-    [string]$ServiceName,
-    [string]$DisplayName,
-    [string]$ServiceAccountType = "LocalSystem",
-    [string]$Username,
-    [string]$Password,
-    [string]$StartType = "auto",
-    [string]$EndpointConfigurationType
+    [string]$sourcePublishedPath,
+    [string]$installPath,
+    [string]$serviceName,
+    [string]$displayName,
+    [string]$serviceAccountType = "LocalSystem",
+    [string]$username,
+    [string]$password,
+    [string]$startType = "auto",
+    [string]$endpointConfigurationType
 )
 
-$logFile = Join-Path -Path $env:Temp -ChildPath "$ServiceName-install-log.txt"
+$logFile = Join-Path -Path $env:Temp -ChildPath "$serviceName-install-log.txt"
 function Log($message) {
     $timestamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss"
     $logLine = "$timestamp - $message"
@@ -18,51 +18,61 @@ function Log($message) {
     Add-Content -Path $logFile -Value $logLine
 }
 
-Log "Starting installation of NServiceBus service: $ServiceName"
+Log "Starting installation of NServiceBus service: $serviceName"
 
 # Stop and remove existing service if it exists
-$existingService = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
+$existingService = Get-Service -Name $serviceName -ErrorAction SilentlyContinue
 if ($existingService) {
-    Log "Stopping existing service: $ServiceName"
-    Stop-Service -Name $ServiceName -Force -ErrorAction SilentlyContinue
+    Log "Stopping existing service: $serviceName"
+    Stop-Service -Name $serviceName -Force -ErrorAction SilentlyContinue
 
     Log "Waiting 30 seconds before uninstalling service"
     Start-Sleep -Seconds 30
 
-    Log "Deleting existing service: $ServiceName"
-    sc.exe delete $ServiceName | Out-Null
+    Log "Deleting existing service: $serviceName"
+    sc.exe delete $serviceName | Out-Null
 } else {
-    Log "No existing service named $ServiceName found"
+    Log "No existing service named $serviceName found"
 }
 
 # Clear old install path if exists
-if (Test-Path $InstallPath) {
-    Log "Removing previous install directory: $InstallPath"
-    Remove-Item -Path $InstallPath -Recurse -Force
+if (Test-Path $installPath) {
+    Log "Removing previous install directory: $installPath"
+    Remove-Item -Path $installPath -Recurse -Force
 }
-Log "Creating new install directory: $InstallPath"
-New-Item -ItemType Directory -Force -Path $InstallPath | Out-Null
+Log "Creating new install directory: $installPath"
+New-Item -ItemType Directory -Force -Path $installPath | Out-Null
 
-Log "Copying EXE to install directory"
-Copy-Item -Path $ExeSourcePath -Destination $InstallPath -Force
+# Copy all files from source published path
+Log "Copying all files from source published path: $sourcePublishedPath to $installPath"
+if (-not (Test-Path $sourcePublishedPath)) {
+    Log "Source published path $sourcePublishedPath does not exist"
+    exit 1
+}
+Copy-Item -Path "$sourcePublishedPath\*" -Destination $installPath -Recurse -Force
 
-$ExeFileName = [System.IO.Path]::GetFileName($ExeSourcePath)
-$FinalExePath = Join-Path $InstallPath $ExeFileName
+# Find the first .exe file for installation
+$exeFileName = Get-ChildItem -Path $installPath -Filter "*.exe" | Select-Object -First 1 -ExpandProperty Name
+if (-not $exeFileName) {
+    Log "No .exe file found in $installPath after copying"
+    exit 1
+}
+$finalExePath = Join-Path $installPath $exeFileName
 
 # Prepare installation command
-$installCommand = "`"$FinalExePath`" install /servicename:`"$ServiceName`" /displayname:`"$DisplayName`""
-if ($EndpointConfigurationType) {
-    $installCommand += " /endpointConfigurationType:`"$EndpointConfigurationType`""
+$installCommand = "`"$finalExePath`" install /servicename:`"$serviceName`" /displayname:`"$displayName`""
+if ($endpointConfigurationType) {
+    $installCommand += " /endpointConfigurationType:`"$endpointConfigurationType`""
 }
-if ($ServiceAccountType -eq "Custom" -and $Username -and $Password) {
-    $installCommand += " /username:`"$Username`" /password:`"$Password`""
+if ($serviceAccountType -eq "Custom" -and $username -and $password) {
+    $installCommand += " /username:`"$username`" /password:`"$password`""
 }
 
 Log "Running install command: $installCommand"
 Invoke-Expression $installCommand
 
 # Start the new service
-Log "Starting new service: $ServiceName"
-& $FinalExePath start
+Log "Starting new service: $serviceName"
+& $finalExePath start
 
-Log "Service '$ServiceName' successfully installed and started"
+Log "Service '$serviceName' successfully installed and started"

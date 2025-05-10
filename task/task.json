@@ -7,7 +7,7 @@
   "category": "Utility",
   "version": {
     "Major": 1,
-    "Minor": 0,
+    "Minor": 1,
     "Patch": 0
   },
   "instanceNameFormat": "Install NSB Service: $(serviceName)",
@@ -25,15 +25,16 @@
       "required": true
     },
     {
+      "name": "sourcePublishedPath",
+      "type": "filePath",
+      "label": "Source Published Path",
+      "required": true,
+      "helpMarkDown": "Path to the published output (e.g., from a build artifact or a repo)"
+    },
+    {
       "name": "installPath",
       "type": "filePath",
       "label": "Install Path",
-      "required": true
-    },
-    {
-      "name": "exeSourcePath",
-      "type": "filePath",
-      "label": "Executable Path (.exe)",
       "required": true
     },
     {
@@ -50,13 +51,13 @@
     {
       "name": "username",
       "type": "string",
-      "label": "Username (if Custom)",
+      "label": "Username (Optional)",
       "required": false
     },
     {
       "name": "password",
       "type": "password",
-      "label": "Password (if Custom)",
+      "label": "Password (Optional)",
       "required": false
     },
     {
@@ -81,7 +82,7 @@
   "execution": {
     "PowerShell3": {
       "target": "install-service.ps1",
-      "argumentFormat": "-ServiceName \"$(serviceName)\" -DisplayName \"$(displayName)\" -InstallPath \"$(installPath)\" -ExeSourcePath \"$(exeSourcePath)\" -ServiceAccountType \"$(serviceAccountType)\" -Username \"$(username)\" -Password \"$(password)\" -StartType \"$(startType)\" -EndpointConfigurationType \"$(endpointConfigurationType)\""
+      "argumentFormat": "-serviceName \"$(serviceName)\" -displayName \"$(displayName)\" -installPath \"$(installPath)\" -sourcePublishedPath \"$(sourcePublishedPath)\" -serviceAccountType \"$(serviceAccountType)\" -username \"$(username)\" -password \"$(password)\" -startType \"$(startType)\" -endpointConfigurationType \"$(endpointConfigurationType)\""
     }
   }
 }
