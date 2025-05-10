@@ -1,3 +1,5 @@
+Import-Module "$PSScriptRoot\\ps_modules\\VstsTaskSdk\\VstsTaskSdk.psd1"
+
 param (
     [string]$sourcePublishedPath,
     [string]$installPath,

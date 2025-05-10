@@ -1,4 +1,4 @@
-# Install Windows Service Task (v1.1.0)
+# Install Windows Service Task (v1.2.0)
 
 ## English
 
