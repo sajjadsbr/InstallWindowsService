@@ -1,0 +1,87 @@
+{
+  "id": "ecb2893f-6b57-48c9-9a9e-f2b8b65d601a",
+  "name": "InstallNServiceBusService",
+  "friendlyName": "Install NServiceBus Windows Service",
+  "description": "Installs and starts an NServiceBus-compatible Windows service",
+  "author": "Sajjad Saberi",
+  "category": "Utility",
+  "version": {
+    "Major": 1,
+    "Minor": 0,
+    "Patch": 0
+  },
+  "instanceNameFormat": "Install NSB Service: $(serviceName)",
+  "inputs": [
+    {
+      "name": "serviceName",
+      "type": "string",
+      "label": "Service Name",
+      "required": true
+    },
+    {
+      "name": "displayName",
+      "type": "string",
+      "label": "Display Name",
+      "required": true
+    },
+    {
+      "name": "installPath",
+      "type": "filePath",
+      "label": "Install Path",
+      "required": true
+    },
+    {
+      "name": "exeSourcePath",
+      "type": "filePath",
+      "label": "Executable Path (.exe)",
+      "required": true
+    },
+    {
+      "name": "serviceAccountType",
+      "type": "pickList",
+      "label": "Service Account Type",
+      "defaultValue": "LocalSystem",
+      "options": {
+        "LocalSystem": "Local System",
+        "Custom": "Custom (Username/Password)"
+      },
+      "required": true
+    },
+    {
+      "name": "username",
+      "type": "string",
+      "label": "Username (if Custom)",
+      "required": false
+    },
+    {
+      "name": "password",
+      "type": "password",
+      "label": "Password (if Custom)",
+      "required": false
+    },
+    {
+      "name": "startType",
+      "type": "pickList",
+      "label": "Start Type",
+      "defaultValue": "auto",
+      "options": {
+        "auto": "Automatic",
+        "manual": "Manual",
+        "disabled": "Disabled"
+      },
+      "required": true
+    },
+    {
+      "name": "endpointConfigurationType",
+      "type": "string",
+      "label": "Endpoint Configuration Type",
+      "required": false
+    }
+  ],
+  "execution": {
+    "PowerShell3": {
+      "target": "install-service.ps1",
+      "argumentFormat": "-ServiceName \"$(serviceName)\" -DisplayName \"$(displayName)\" -InstallPath \"$(installPath)\" -ExeSourcePath \"$(exeSourcePath)\" -ServiceAccountType \"$(serviceAccountType)\" -Username \"$(username)\" -Password \"$(password)\" -StartType \"$(startType)\" -EndpointConfigurationType \"$(endpointConfigurationType)\""
+    }
+  }
+}

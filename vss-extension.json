@@ -1,0 +1,37 @@
+{
+  "manifestVersion": 1,
+  "id": "install-windows-service-task",
+  "name": "Install Windows Service",
+  "version": "1.0.0",
+  "publisher": "SajjadSaberi",
+  "targets": [
+    {
+      "id": "Microsoft.VisualStudio.Services"
+    }
+  ],
+  "description": "Task for installing Windows services during deployments.",
+  "categories": [
+    "Build and release"
+  ],
+  "icons": {
+    "default": "icon.png"
+  },
+  "files": [
+    {
+      "path": "task",
+      "addressable": true
+    }
+  ],
+  "contributions": [
+    {
+      "id": "install-windows-service",
+      "type": "ms.vss-distributed-task.task",
+      "targets": [
+        "ms.vss-distributed-task.tasks"
+      ],
+      "properties": {
+        "name": "task"
+      }
+    }
+  ]
+}
